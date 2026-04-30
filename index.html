@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>极简轻奢商城</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 登录页面 -->
+    <div id="login-page" class="page active">
+        <div class="container">
+            <div class="auth-container">
+                <h1 class="logo">极简轻奢</h1>
+                <p class="tagline">品味生活，简约而不简单</p>
+                <form id="login-form" class="auth-form">
+                    <div class="form-group">
+                        <input type="email" id="login-email" placeholder="邮箱" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="login-password" placeholder="密码" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">登录</button>
+                </form>
+                <div class="auth-footer">
+                    <span>还没有账号？</span>
+                    <a href="#" id="go-to-register">立即注册</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 注册页面 -->
+    <div id="register-page" class="page">
+        <div class="container">
+            <div class="auth-container">
+                <h1 class="logo">极简轻奢</h1>
+                <p class="tagline">加入我们，开启品质生活</p>
+                <form id="register-form" class="auth-form">
+                    <div class="form-group">
+                        <input type="text" id="register-name" placeholder="用户名" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="email" id="register-email" placeholder="邮箱" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="register-password" placeholder="密码" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="register-confirm-password" placeholder="确认密码" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">注册</button>
+                </form>
+                <div class="auth-footer">
+                    <span>已有账号？</span>
+                    <a href="#" id="go-to-login">立即登录</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 商城页面 -->
+    <div id="store-page" class="page">
+        <header class="header">
+            <div class="container">
+                <div class="header-content">
+                    <h1 class="logo">极简轻奢</h1>
+                    <nav class="nav">
+                        <a href="#" class="nav-link active" data-page="store">首页</a>
+                        <a href="#" class="nav-link" data-page="cart">购物车</a>
+                    </nav>
+                    <div class="header-actions">
+                        <span id="user-name" class="user-name"></span>
+                        <button id="logout-btn" class="btn btn-outline">退出</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <main class="main">
+            <div class="container">
+                <div class="hero">
+                    <h2>品质生活，从这里开始</h2>
+                    <p>精选全球优质商品，为您打造极简轻奢生活方式</p>
+                </div>
+                
+                <div class="products-section">
+                    <h3 class="section-title">精选商品</h3>
+                    <div id="products-grid" class="products-grid">
+                        <!-- 商品将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 购物车页面 -->
+    <div id="cart-page" class="page">
+        <header class="header">
+            <div class="container">
+                <div class="header-content">
+                    <h1 class="logo">极简轻奢</h1>
+                    <nav class="nav">
+                        <a href="#" class="nav-link" data-page="store">首页</a>
+                        <a href="#" class="nav-link active" data-page="cart">购物车</a>
+                    </nav>
+                    <div class="header-actions">
+                        <span id="cart-user-name" class="user-name"></span>
+                        <button id="cart-logout-btn" class="btn btn-outline">退出</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <main class="main">
+            <div class="container">
+                <div class="cart-section">
+                    <h3 class="section-title">我的购物车</h3>
+                    <div id="cart-items" class="cart-items">
+                        <!-- 购物车项目将通过JavaScript动态生成 -->
+                    </div>
+                    <div id="cart-empty" class="cart-empty" style="display: none;">
+                        <p>购物车是空的，快去挑选心仪的商品吧！</p>
+                        <button class="btn btn-primary" id="go-shopping">去购物</button>
+                    </div>
+                    <div id="cart-summary" class="cart-summary" style="display: none;">
+                        <div class="summary-row">
+                            <span>商品总数：</span>
+                            <span id="total-items">0</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>总价：</span>
+                            <span id="total-price">¥0.00</span>
+                        </div>
+                        <button class="btn btn-primary btn-block" id="checkout-btn">结算</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 结算页面 -->
+    <div id="checkout-page" class="page">
+        <header class="header">
+            <div class="container">
+                <div class="header-content">
+                    <h1 class="logo">极简轻奢</h1>
+                    <nav class="nav">
+                        <a href="#" class="nav-link" data-page="store">首页</a>
+                        <a href="#" class="nav-link" data-page="cart">购物车</a>
+                    </nav>
+                    <div class="header-actions">
+                        <span id="checkout-user-name" class="user-name"></span>
+                        <button id="checkout-logout-btn" class="btn btn-outline">退出</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <main class="main">
+            <div class="container">
+                <div class="checkout-section">
+                    <h3 class="section-title">订单确认</h3>
+                    <div id="checkout-items" class="checkout-items">
+                        <!-- 结算项目将通过JavaScript动态生成 -->
+                    </div>
+                    <div class="checkout-summary">
+                        <div class="summary-row">
+                            <span>商品总数：</span>
+                            <span id="checkout-total-items">0</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>总价：</span>
+                            <span id="checkout-total-price">¥0.00</span>
+                        </div>
+                        <form id="checkout-form" class="checkout-form">
+                            <div class="form-group">
+                                <input type="text" id="shipping-name" placeholder="收货人姓名" required>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" id="shipping-phone" placeholder="收货人电话" required>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" id="shipping-address" placeholder="收货地址" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">确认订单</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 订单成功页面 -->
+    <div id="success-page" class="page">
+        <header class="header">
+            <div class="container">
+                <div class="header-content">
+                    <h1 class="logo">极简轻奢</h1>
+                    <nav class="nav">
+                        <a href="#" class="nav-link" data-page="store">首页</a>
+                        <a href="#" class="nav-link" data-page="cart">购物车</a>
+                    </nav>
+                    <div class="header-actions">
+                        <span id="success-user-name" class="user-name"></span>
+                        <button id="success-logout-btn" class="btn btn-outline">退出</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <main class="main">
+            <div class="container">
+                <div class="success-section">
+                    <div class="success-icon">✓</div>
+                    <h2>订单提交成功！</h2>
+                    <p>感谢您的购买，我们会尽快为您安排发货。</p>
+                    <button class="btn btn-primary" id="continue-shopping">继续购物</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 消息提示 -->
+    <div id="message" class="message"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
