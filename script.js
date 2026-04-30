@@ -1,51 +1,12 @@
+// API基础URL
+const API_BASE_URL = 'http://localhost:3000/api';
+
 // 应用状态
 const App = {
     currentUser: null,
+    sessionId: null,
     cart: [],
-    products: [
-        {
-            id: 1,
-            name: "极简手表",
-            description: "瑞士工艺，极简设计，精准计时",
-            price: 2999,
-            image: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=minimalist%20luxury%20watch%20with%20clean%20design%20white%20background&image_size=square_hd"
-        },
-        {
-            id: 2,
-            name: "轻奢香水",
-            description: "法国进口，持久留香，优雅气质",
-            price: 899,
-            image: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=elegant%20luxury%20perfume%20bottle%20minimalist%20design%20white%20background&image_size=square_hd"
-        },
-        {
-            id: 3,
-            name: "真皮钱包",
-            description: "意大利小牛皮，手工缝制，品质之选",
-            price: 1299,
-            image: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=minimalist%20luxury%20leather%20wallet%20clean%20design%20white%20background&image_size=square_hd"
-        },
-        {
-            id: 4,
-            name: "轻奢眼镜",
-            description: "钛合金框架，防蓝光镜片，时尚百搭",
-            price: 1599,
-            image: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=minimalist%20luxury%20eyeglasses%20clean%20design%20white%20background&image_size=square_hd"
-        },
-        {
-            id: 5,
-            name: "极简台灯",
-            description: "北欧设计，LED光源，触控调节",
-            price: 799,
-            image: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=minimalist%20luxury%20table%20lamp%20clean%20design%20white%20background&image_size=square_hd"
-        },
-        {
-            id: 6,
-            name: "轻奢保温杯",
-            description: "316不锈钢，24小时保温，简约时尚",
-            price: 399,
-            image: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=minimalist%20luxury%20thermos%20bottle%20clean%20design%20white%20background&image_size=square_hd"
-        }
-    ]
+    products: []
 };
 
 // DOM元素
@@ -105,6 +66,40 @@ const elements = {
     navLinks: document.querySelectorAll('.nav-link')
 };
 
+// API请求工具函数
+async function apiRequest(endpoint, options = {}) {
+    const url = `${API_BASE_URL}${endpoint}`;
+    
+    const defaultHeaders = {
+        'Content-Type': 'application/json'
+    };
+    
+    // 如果有sessionId，添加到请求头
+    if (App.sessionId) {
+        defaultHeaders['Authorization'] = App.sessionId;
+    }
+    
+    const config = {
+        ...options,
+        headers: {
+            ...defaultHeaders,
+            ...options.headers
+        }
+    };
+    
+    try {
+        const response = await fetch(url, config);
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('API请求错误:', error);
+        return {
+            success: false,
+            message: '网络错误，请稍后重试'
+        };
+    }
+}
+
 // 工具函数
 function showMessage(text, type = 'success') {
     elements.message.textContent = text;
@@ -131,12 +126,12 @@ function showPage(pageName) {
         case 'store':
             elements.storePage.classList.add('active');
             updateUserName();
-            renderProducts();
+            loadProducts();
             break;
         case 'cart':
             elements.cartPage.classList.add('active');
             updateUserName();
-            renderCart();
+            loadCart();
             break;
         case 'checkout':
             elements.checkoutPage.classList.add('active');
@@ -167,140 +162,175 @@ function updateUserName() {
     }
 }
 
-// 用户认证
-function registerUser(name, email, password) {
-    // 检查邮箱是否已注册
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const existingUser = users.find(user => user.email === email);
-    
-    if (existingUser) {
-        showMessage('该邮箱已被注册', 'error');
-        return false;
+function saveSession() {
+    if (App.currentUser && App.sessionId) {
+        localStorage.setItem('currentUser', JSON.stringify(App.currentUser));
+        localStorage.setItem('sessionId', App.sessionId);
     }
-    
-    // 创建新用户
-    const newUser = {
-        id: Date.now(),
-        name: name,
-        email: email,
-        password: password
-    };
-    
-    // 保存用户
-    users.push(newUser);
-    localStorage.setItem('users', JSON.stringify(users));
-    
-    showMessage('注册成功，请登录');
-    return true;
 }
 
-function loginUser(email, password) {
-    // 检查用户是否存在
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const user = users.find(user => user.email === email && user.password === password);
-    
-    if (!user) {
-        showMessage('邮箱或密码错误', 'error');
-        return false;
-    }
-    
-    // 设置当前用户
-    App.currentUser = user;
-    localStorage.setItem('currentUser', JSON.stringify(user));
-    
-    // 加载用户购物车
-    loadCart();
-    
-    showMessage(`欢迎回来，${user.name}！`);
-    return true;
-}
-
-function logoutUser() {
-    // 保存购物车
-    saveCart();
-    
-    // 清除当前用户
+function clearSession() {
     App.currentUser = null;
+    App.sessionId = null;
     App.cart = [];
     localStorage.removeItem('currentUser');
-    
-    showMessage('已退出登录');
-    showPage('login');
+    localStorage.removeItem('sessionId');
 }
 
-function checkLoginStatus() {
+function loadSession() {
     const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
+    const savedSessionId = localStorage.getItem('sessionId');
+    
+    if (savedUser && savedSessionId) {
         App.currentUser = JSON.parse(savedUser);
-        loadCart();
-        showPage('store');
+        App.sessionId = savedSessionId;
         return true;
     }
     return false;
 }
 
+// 用户认证
+async function registerUser(name, email, password) {
+    const response = await apiRequest('/register', {
+        method: 'POST',
+        body: JSON.stringify({ name, email, password })
+    });
+    
+    if (response.success) {
+        showMessage(response.message);
+        return true;
+    } else {
+        showMessage(response.message, 'error');
+        return false;
+    }
+}
+
+async function loginUser(email, password) {
+    const response = await apiRequest('/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+    });
+    
+    if (response.success) {
+        App.currentUser = response.user;
+        App.sessionId = response.sessionId;
+        saveSession();
+        showMessage(response.message);
+        return true;
+    } else {
+        showMessage(response.message, 'error');
+        return false;
+    }
+}
+
+async function logoutUser() {
+    const response = await apiRequest('/logout', {
+        method: 'POST'
+    });
+    
+    if (response.success) {
+        showMessage(response.message);
+    } else {
+        showMessage(response.message, 'error');
+    }
+    
+    clearSession();
+    showPage('login');
+}
+
+async function checkLoginStatus() {
+    if (loadSession()) {
+        // 验证session是否有效
+        const response = await apiRequest('/user');
+        
+        if (response.success) {
+            App.currentUser = response.user;
+            return true;
+        } else {
+            clearSession();
+            return false;
+        }
+    }
+    return false;
+}
+
+// 商品功能
+async function loadProducts() {
+    const response = await apiRequest('/products');
+    
+    if (response.success) {
+        App.products = response.products;
+        renderProducts();
+    } else {
+        showMessage('加载商品失败', 'error');
+    }
+}
+
 // 购物车功能
-function saveCart() {
-    if (App.currentUser) {
-        localStorage.setItem(`cart_${App.currentUser.id}`, JSON.stringify(App.cart));
+async function loadCart() {
+    const response = await apiRequest('/cart');
+    
+    if (response.success) {
+        App.cart = response.cart;
+        renderCart();
+    } else {
+        // 如果是未登录错误，跳转到登录页
+        if (response.message === '请先登录' || response.message === '登录已过期，请重新登录') {
+            showMessage(response.message, 'error');
+            clearSession();
+            showPage('login');
+        } else {
+            showMessage('加载购物车失败', 'error');
+        }
     }
 }
 
-function loadCart() {
-    if (App.currentUser) {
-        const savedCart = localStorage.getItem(`cart_${App.currentUser.id}`);
-        App.cart = savedCart ? JSON.parse(savedCart) : [];
-    }
-}
-
-function addToCart(productId) {
+async function addToCart(productId) {
     // 检查用户是否登录
-    if (!App.currentUser) {
+    if (!App.currentUser || !App.sessionId) {
         showMessage('请先登录', 'error');
         showPage('login');
         return;
     }
     
-    // 查找商品
-    const product = App.products.find(p => p.id === productId);
-    if (!product) {
-        showMessage('商品不存在', 'error');
-        return;
-    }
+    const response = await apiRequest('/cart/add', {
+        method: 'POST',
+        body: JSON.stringify({ productId })
+    });
     
-    // 检查商品是否已在购物车中
-    const existingItem = App.cart.find(item => item.id === productId);
-    if (existingItem) {
-        existingItem.quantity += 1;
+    if (response.success) {
+        App.cart = response.cart;
+        showMessage(response.message);
     } else {
-        App.cart.push({
-            ...product,
-            quantity: 1
-        });
+        showMessage(response.message, 'error');
     }
-    
-    // 保存购物车
-    saveCart();
-    
-    showMessage('已添加到购物车');
 }
 
-function removeFromCart(productId) {
-    App.cart = App.cart.filter(item => item.id !== productId);
-    saveCart();
-    renderCart();
-}
-
-function updateCartQuantity(productId, change) {
-    const item = App.cart.find(item => item.id === productId);
-    if (item) {
-        item.quantity += change;
-        if (item.quantity <= 0) {
-            removeFromCart(productId);
-            return;
-        }
-        saveCart();
+async function removeFromCart(productId) {
+    const response = await apiRequest(`/cart/remove/${productId}`, {
+        method: 'DELETE'
+    });
+    
+    if (response.success) {
+        App.cart = response.cart;
+        showMessage(response.message);
         renderCart();
+    } else {
+        showMessage(response.message, 'error');
+    }
+}
+
+async function updateCartQuantity(productId, change) {
+    const response = await apiRequest('/cart/update', {
+        method: 'PUT',
+        body: JSON.stringify({ productId, change })
+    });
+    
+    if (response.success) {
+        App.cart = response.cart;
+        renderCart();
+    } else {
+        showMessage(response.message, 'error');
     }
 }
 
@@ -317,6 +347,27 @@ function calculateCartTotal() {
         totalItems,
         totalPrice
     };
+}
+
+// 结算功能
+async function checkout(shippingName, shippingPhone, shippingAddress) {
+    const response = await apiRequest('/checkout', {
+        method: 'POST',
+        body: JSON.stringify({ 
+            shippingName, 
+            shippingPhone, 
+            shippingAddress 
+        })
+    });
+    
+    if (response.success) {
+        App.cart = [];
+        showMessage(response.message);
+        return true;
+    } else {
+        showMessage(response.message, 'error');
+        return false;
+    }
 }
 
 // 渲染功能
@@ -455,25 +506,32 @@ function initEventListeners() {
             e.preventDefault();
             const page = e.target.dataset.page;
             if (page) {
+                // 检查是否登录
+                if (!App.currentUser && (page === 'store' || page === 'cart')) {
+                    showMessage('请先登录', 'error');
+                    showPage('login');
+                    return;
+                }
                 showPage(page);
             }
         });
     });
     
     // 登录表单
-    elements.loginForm.addEventListener('submit', (e) => {
+    elements.loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = elements.loginEmail.value.trim();
         const password = elements.loginPassword.value;
         
-        if (loginUser(email, password)) {
+        const success = await loginUser(email, password);
+        if (success) {
             showPage('store');
             elements.loginForm.reset();
         }
     });
     
     // 注册表单
-    elements.registerForm.addEventListener('submit', (e) => {
+    elements.registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = elements.registerName.value.trim();
         const email = elements.registerEmail.value.trim();
@@ -486,7 +544,8 @@ function initEventListeners() {
             return;
         }
         
-        if (registerUser(name, email, password)) {
+        const success = await registerUser(name, email, password);
+        if (success) {
             showPage('login');
             elements.registerForm.reset();
         }
@@ -513,7 +572,7 @@ function initEventListeners() {
     });
     
     // 结算表单
-    elements.checkoutForm.addEventListener('submit', (e) => {
+    elements.checkoutForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = elements.shippingName.value.trim();
         const phone = elements.shippingPhone.value.trim();
@@ -524,15 +583,11 @@ function initEventListeners() {
             return;
         }
         
-        // 清空购物车
-        App.cart = [];
-        saveCart();
-        
-        // 重置表单
-        elements.checkoutForm.reset();
-        
-        // 显示成功页面
-        showPage('success');
+        const success = await checkout(name, phone, address);
+        if (success) {
+            elements.checkoutForm.reset();
+            showPage('success');
+        }
     });
     
     // 继续购物
@@ -542,11 +597,14 @@ function initEventListeners() {
 }
 
 // 初始化应用
-function init() {
+async function init() {
     initEventListeners();
     
     // 检查登录状态
-    if (!checkLoginStatus()) {
+    const isLoggedIn = await checkLoginStatus();
+    if (isLoggedIn) {
+        showPage('store');
+    } else {
         showPage('login');
     }
 }
